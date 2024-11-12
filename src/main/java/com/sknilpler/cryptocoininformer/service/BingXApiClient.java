@@ -9,11 +9,11 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 public class BingXApiClient {
-    private static final String BINGX_API_URL = "https://api.bingx.com/api/v1/market/tickers";
+    private static final String URL_24H = "https://api.bingx.com/api/v1/market/tickers";
 
     public static JsonNode get24HourData() throws Exception {
         CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet request = new HttpGet(BINGX_API_URL);
+        HttpGet request = new HttpGet(URL_24H);
         CloseableHttpResponse response = client.execute(request);
 
         String responseBody = EntityUtils.toString(response.getEntity());

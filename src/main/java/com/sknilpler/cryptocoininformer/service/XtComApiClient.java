@@ -2,7 +2,9 @@ package com.sknilpler.cryptocoininformer.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sknilpler.cryptocoininformer.enums.ExchangeApiUrl24H;
 import com.sknilpler.cryptocoininformer.model.Ticker;
+import com.sknilpler.cryptocoininformer.util.ApiClient;
 import com.sknilpler.cryptocoininformer.util.FormattingSymbol;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -13,21 +15,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Service
-public class XtComApiClient {
-    private static final String XT_API_URL = "https://sapi.xt.com/v4/public/ticker/24h";
+public class XtComApiClient implements TickerService {
 
+    private final ApiClient apiClient;
+
+    public XtComApiClient(ApiClient apiClient) {
+        this.apiClient = apiClient;
+    }
+
+    @Override
     public JsonNode get24HourData() throws Exception {
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet request = new HttpGet(XT_API_URL);
-        CloseableHttpResponse response = client.execute(request);
-
-        String responseBody = EntityUtils.toString(response.getEntity());
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readTree(responseBody);
+        return apiClient.getData(ExchangeApiUrl24H.XT_24H.getUrl24H());
     }
 
     // Метод для приведения данных в единый формат
+    @Override
     public List<Ticker> parseData(JsonNode data) {
         List<Ticker> parsedData = new ArrayList<>();
         for (JsonNode coin : data.get("result")) {
@@ -43,6 +47,7 @@ public class XtComApiClient {
         return parsedData;
     }
 
+    @Override
     public List<Ticker> getParsing24HoursData() {
         try {
             return parseData(get24HourData());

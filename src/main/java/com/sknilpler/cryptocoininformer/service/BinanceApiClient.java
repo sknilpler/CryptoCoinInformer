@@ -1,34 +1,31 @@
 package com.sknilpler.cryptocoininformer.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sknilpler.cryptocoininformer.enums.ExchangeApiUrl24H;
 import com.sknilpler.cryptocoininformer.model.Ticker;
+import com.sknilpler.cryptocoininformer.util.ApiClient;
 import com.sknilpler.cryptocoininformer.util.FormattingSymbol;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class BinanceApiClient {
-    private static final String BINANCE_API_URL = "https://api.binance.com/api/v3/ticker/24hr";
+public class BinanceApiClient implements TickerService {
 
-    public JsonNode get24HourData() throws Exception {
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet request = new HttpGet(BINANCE_API_URL);
-        CloseableHttpResponse response = client.execute(request);
+    private final ApiClient apiClient;
 
-        String responseBody = EntityUtils.toString(response.getEntity());
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readTree(responseBody);
+    // Внедрение через конструктор
+    public BinanceApiClient(ApiClient apiClient) {
+        this.apiClient = apiClient;
     }
 
-    // Метод для приведения данных в единый формат
+    @Override
+    public JsonNode get24HourData() throws Exception {
+        return apiClient.getData(ExchangeApiUrl24H.BINANCE_24H.getUrl24H());
+    }
+
+    @Override
     public List<Ticker> parseData(JsonNode data) {
         List<Ticker> parsedData = new ArrayList<>();
         for (JsonNode coin : data) {
@@ -44,6 +41,7 @@ public class BinanceApiClient {
         return parsedData;
     }
 
+    @Override
     public List<Ticker> getParsing24HoursData() {
         try {
             return parseData(get24HourData());

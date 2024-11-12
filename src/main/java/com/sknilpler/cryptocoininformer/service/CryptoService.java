@@ -4,9 +4,11 @@ import com.sknilpler.cryptocoininformer.model.ExchangeData;
 import com.sknilpler.cryptocoininformer.model.Ticker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 public class CryptoService {
@@ -28,33 +30,43 @@ public class CryptoService {
     private OkxApiClient okxClient;
     @Autowired
     private XtComApiClient xtComClient;
-    // Другие API клиенты
+
 
     public List<ExchangeData> getAllExchangesData() {
-        List<ExchangeData> allData = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(10); // Пул потоков для параллельного выполнения
         try {
             System.out.println("Получение данных с API бирж...");
             long startTime = System.currentTimeMillis();
-            allData.add(new ExchangeData("Binance", binanceClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("BitMart", bitMartClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("CoinEx", coinExClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("GateIo", gateIoClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("Huobi", huobiClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("KuCoin", kuCoinClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("Mexc", mexcClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("OKX", okxClient.getParsing24HoursData()));
-            allData.add(new ExchangeData("XtCom", xtComClient.getParsing24HoursData()));
-            // Другие биржи
-            long endTime = System.currentTimeMillis();
 
-            long timeElapsed = endTime - startTime;
-            System.out.println("Данные с бирж получены!\nВремени затрачено: "+timeElapsed+" мс");
+            List<CompletableFuture<ExchangeData>> futures = List.of(
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("Binance", binanceClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("BitMart", bitMartClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("CoinEx", coinExClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("GateIo", gateIoClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("Huobi", huobiClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("KuCoin", kuCoinClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("Mexc", mexcClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("OKX", okxClient.getParsing24HoursData()), executor),
+                    CompletableFuture.supplyAsync(() -> new ExchangeData("XtCom", xtComClient.getParsing24HoursData()), executor)
+            );
+
+            // Ожидание завершения всех задач и сбор результатов
+            List<ExchangeData> allData = futures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            long endTime = System.currentTimeMillis();
+            System.out.println("Данные с бирж получены!\nВремени затрачено: " + (endTime - startTime) + " мс");
+            System.out.println("Кол-во полученных записей пар:");
+            allData.forEach(data -> System.out.println("\t" + data.getExchangeName() + ": " + data.getTickers().size()));
+
+            return allData;
         } catch (Exception e) {
             System.out.println("Не удалось получить данные с бирж!");
             throw new RuntimeException(e);
+        } finally {
+            executor.shutdown(); // Завершение пула потоков
         }
-
-        return allData;
     }
 
     public List<Ticker> getBinanceData() {
@@ -92,5 +104,4 @@ public class CryptoService {
         return xtComClient.getParsing24HoursData();
     }
 
-    // Аналогичные методы для других бирж
 }

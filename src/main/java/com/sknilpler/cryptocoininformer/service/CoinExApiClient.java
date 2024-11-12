@@ -2,7 +2,9 @@ package com.sknilpler.cryptocoininformer.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sknilpler.cryptocoininformer.enums.ExchangeApiUrl24H;
 import com.sknilpler.cryptocoininformer.model.Ticker;
+import com.sknilpler.cryptocoininformer.util.ApiClient;
 import com.sknilpler.cryptocoininformer.util.FormattingSymbol;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -13,21 +15,25 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Service
-public class CoinExApiClient {
-    private static final String COINEX_API_URL = "https://api.coinex.com/v1/market/ticker/all";
+public class CoinExApiClient implements TickerService {
+    private static final String URL_24H = "https://api.coinex.com/v1/market/ticker/all";
 
+    private final ApiClient apiClient;
+
+
+    public CoinExApiClient(ApiClient apiClient) {
+        this.apiClient = apiClient;
+    }
+
+    @Override
     public JsonNode get24HourData() throws Exception {
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet request = new HttpGet(COINEX_API_URL);
-        CloseableHttpResponse response = client.execute(request);
-
-        String responseBody = EntityUtils.toString(response.getEntity());
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readTree(responseBody);
+        return apiClient.getData(ExchangeApiUrl24H.COINEX_24H.getUrl24H());
     }
 
     // Метод для приведения данных CoinEx в единый формат
+    @Override
     public List<Ticker> parseData(JsonNode data) {
         List<Ticker> parsedData = new ArrayList<>();
 
@@ -63,6 +69,7 @@ public class CoinExApiClient {
         return parsedData;
     }
 
+    @Override
     public List<Ticker> getParsing24HoursData() {
         try {
             return parseData(get24HourData());

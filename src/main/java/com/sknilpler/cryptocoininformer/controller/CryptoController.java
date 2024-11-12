@@ -122,5 +122,4 @@ public class CryptoController {
         return ResponseEntity.ok(cryptoService.getXtComData());
     }
 
-    // Аналогичные методы для других бирж
 }
