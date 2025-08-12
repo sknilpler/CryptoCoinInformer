@@ -57,10 +57,6 @@ By default, the app runs on `http://localhost:8080`.
 After starting the app, open in your browser:
 
 ```
-http://localhost:8080/swagger-ui.html
-```
-or (depending on SpringDoc version):
-```
 http://localhost:8080/swagger-ui/index.html
 ```
 
@@ -110,7 +106,6 @@ src/main/resources/application.properties
 You can configure:
 - Application port.
 - Request timeouts.
-- API keys (if required for specific exchanges).
 
 ---
 
@@ -160,10 +155,6 @@ http://localhost:8080
 ```
 
 Swagger UI:
-```
-http://localhost:8080/swagger-ui.html
-```
-or
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
